@@ -1,0 +1,50 @@
+# PostGIS API on a Raspberry Pi (or any Docker host)
+#
+#   docker compose up -d --build                 # API only (connects to an existing PostgreSQL)
+#   docker compose --profile db up -d --build    # API + local PostGIS database with sample data
+#
+# Secrets go into a .env file next to this file (never commit it), e.g.:
+#   POSTGISAPI_ADMIN_KEY=<long random string>
+#   DB_PASSWORD=<database password>
+
+services:
+  postgisapi:
+    build: .
+    image: postgisapi:latest
+    container_name: postgisapi
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Optional fixed admin key. If empty, a key is generated on first start and printed to the log:
+      #   docker compose logs postgisapi | grep "initial admin key"
+      PostGISApi__AdminApiKey: ${POSTGISAPI_ADMIN_KEY:-}
+      # Referenced in connections.json via "passwordEnvVar": "DB_PASSWORD"
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      # Set to true when running behind a reverse proxy (nginx, Traefik, Caddy) that terminates TLS
+      PostGISApi__TrustForwardedHeaders: "false"
+      TZ: Europe/Zurich
+    volumes:
+      - postgisapi-config:/app/config
+    # Raspberry Pi: keep the memory footprint small
+    mem_limit: 256m
+
+  # Optional PostGIS database (multi-arch image incl. arm64) – start with: --profile db
+  db:
+    profiles: ["db"]
+    image: imresamu/postgis:17-3.5
+    container_name: postgisapi-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gis
+      POSTGRES_USER: gis
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}   # required: set DB_PASSWORD in .env
+    volumes:
+      - postgis-data:/var/lib/postgresql/data
+      - ./samples/seed.sql:/docker-entrypoint-initdb.d/10-seed.sql:ro
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgisapi-config:
+  postgis-data:

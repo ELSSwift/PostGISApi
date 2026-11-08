@@ -1,0 +1,2154 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "PostGIS API",
+    "description": "Proxy API for PostGIS databases. Layers, named queries and geometry operations are configured in the admin backend (/admin).\n\nAuthentication: API key in header `X-API-Key` (or `Authorization: ApiKey <key>`) or an OIDC access token (`Authorization: Bearer <token>`). Layers and queries flagged as public can be read anonymously.\n\nGeometries are GeoJSON in EPSG:4326 unless `srid` is given.",
+    "license": {
+      "name": "See LICENSE"
+    },
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5080/"
+    }
+  ],
+  "paths": {
+    "/api/v1/layers": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "List all layers visible to the caller",
+        "operationId": "ListLayers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayerSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Layer metadata (SRID, geometry type, properties)",
+        "operationId": "GetLayer",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/features": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Query features as GeoJSON FeatureCollection",
+        "description": "Supports bbox, attribute filters, paging, sorting, property selection, re-projection and simplification.",
+        "operationId": "GetFeatures",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "description": "Bounding box filter: minx,miny,maxx,maxy",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bboxSrid",
+            "in": "query",
+            "description": "SRID of bbox. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Attribute filter column:op:value (repeatable, AND). Operators: eq, neq, lt, lte, gt, gte, like, ilike, in (comma separated values), isnull, notnull. Example: population:gt:10000",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties to return. Default: all exposed properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Sort column.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "desc",
+            "in": "query",
+            "description": "Sort descending.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max. number of features (capped by the layer's maxFeatures).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of features to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the returned geometries. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "description": "Number of decimal places of the coordinates. Default 6.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Simplify geometries with this tolerance (layer units).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "geometry",
+            "in": "query",
+            "description": "Include geometries. Default true.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Include numberMatched (total count). Default false.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Insert a GeoJSON Feature or FeatureCollection (role write)",
+        "operationId": "CreateFeatures",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the input geometries. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            },
+            "application/geo+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsertResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/features/{id}": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Get a single feature by id",
+        "operationId": "GetFeature",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the returned geometry. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeature"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Update a feature (role write). Only supplied properties are changed; geometry if present.",
+        "operationId": "UpdateFeature",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the input geometry. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            },
+            "application/geo+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Delete a feature (role write)",
+        "operationId": "DeleteFeature",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/query": {
+      "post": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Spatial query with an input geometry (intersects, within, contains, dwithin, ...)",
+        "operationId": "QueryFeatures",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeatureQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/count": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Count features (bbox and filter parameters apply)",
+        "operationId": "CountFeatures",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "description": "Bounding box filter: minx,miny,maxx,maxy",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bboxSrid",
+            "in": "query",
+            "description": "SRID of bbox. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Attribute filter column:op:value (repeatable, AND). Operators: eq, neq, lt, lte, gt, gte, like, ilike, in (comma separated values), isnull, notnull. Example: population:gt:10000",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties to return. Default: all exposed properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Sort column.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "desc",
+            "in": "query",
+            "description": "Sort descending.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max. number of features (capped by the layer's maxFeatures).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of features to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the returned geometries. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "description": "Number of decimal places of the coordinates. Default 6.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Simplify geometries with this tolerance (layer units).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "geometry",
+            "in": "query",
+            "description": "Include geometries. Default true.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Include numberMatched (total count). Default false.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/extent": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Bounding box of the (filtered) features",
+        "operationId": "GetExtent",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "description": "Bounding box filter: minx,miny,maxx,maxy",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bboxSrid",
+            "in": "query",
+            "description": "SRID of bbox. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Attribute filter column:op:value (repeatable, AND). Operators: eq, neq, lt, lte, gt, gte, like, ilike, in (comma separated values), isnull, notnull. Example: population:gt:10000",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties to return. Default: all exposed properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Sort column.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "desc",
+            "in": "query",
+            "description": "Sort descending.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max. number of features (capped by the layer's maxFeatures).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of features to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the returned geometries. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "description": "Number of decimal places of the coordinates. Default 6.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Simplify geometries with this tolerance (layer units).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "geometry",
+            "in": "query",
+            "description": "Include geometries. Default true.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Include numberMatched (total count). Default false.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtentResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/nearest": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "k nearest features to a point (property _distance in meters)",
+        "operationId": "NearestFeatures",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "query",
+            "description": "X / longitude of the search point.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "y",
+            "in": "query",
+            "description": "Y / latitude of the search point.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "pointSrid",
+            "in": "query",
+            "description": "SRID of x/y. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "k",
+            "in": "query",
+            "description": "Number of features. Default 10.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxDistance",
+            "in": "query",
+            "description": "Max. distance in meters (optional).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "description": "Bounding box filter: minx,miny,maxx,maxy",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bboxSrid",
+            "in": "query",
+            "description": "SRID of bbox. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Attribute filter column:op:value (repeatable, AND). Operators: eq, neq, lt, lte, gt, gte, like, ilike, in (comma separated values), isnull, notnull. Example: population:gt:10000",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties to return. Default: all exposed properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Sort column.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "desc",
+            "in": "query",
+            "description": "Sort descending.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max. number of features (capped by the layer's maxFeatures).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of features to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "srid",
+            "in": "query",
+            "description": "SRID of the returned geometries. Default 4326.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "description": "Number of decimal places of the coordinates. Default 6.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Simplify geometries with this tolerance (layer units).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "geometry",
+            "in": "query",
+            "description": "Include geometries. Default true.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Include numberMatched (total count). Default false.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/layers/{layer}/tiles/{z}/{x}/{y}.mvt": {
+      "get": {
+        "tags": [
+          "Layers"
+        ],
+        "summary": "Mapbox Vector Tile (EPSG:3857, XYZ scheme)",
+        "operationId": "GetTile",
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "properties",
+            "in": "query",
+            "description": "Comma separated list of properties.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Attribute filter column:op:value (repeatable).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/queries": {
+      "get": {
+        "tags": [
+          "Named queries"
+        ],
+        "summary": "List predefined queries and their parameters",
+        "operationId": "ListQueries",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuerySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/queries/{name}": {
+      "get": {
+        "tags": [
+          "Named queries"
+        ],
+        "summary": "Execute a predefined query, parameters as query string (?name=value)",
+        "operationId": "ExecuteQueryGet",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              },
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Named queries"
+        ],
+        "summary": "Execute a predefined query, parameters as JSON object {\"name\": value}",
+        "operationId": "ExecuteQueryPost",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              },
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoJsonFeatureCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geometry": {
+      "get": {
+        "tags": [
+          "Geometry operations"
+        ],
+        "summary": "List available geometry operations",
+        "operationId": "ListGeometryOperations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geometry/{operation}": {
+      "post": {
+        "tags": [
+          "Geometry operations"
+        ],
+        "summary": "Run a PostGIS function on GeoJSON input",
+        "description": "Operations: transform, buffer, area, length, perimeter, distance, centroid, pointonsurface, envelope, convexhull, simplify, makevalid, isvalid, union, intersection, difference, intersects, contains, within, geometrytype, npoints. Measurements are in meters when geography=true.",
+        "operationId": "GeometryOperation",
+        "parameters": [
+          {
+            "name": "operation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "connection",
+            "in": "query",
+            "description": "Connection to run the operation on. Default: settings.defaultConnection.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeometryOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryOperationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness check",
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/db": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Checks all database connections (role read)",
+        "operationId": "DbHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbHealthResult"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbHealthResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttributeFilter": {
+        "required": [
+          "column",
+          "op",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Attribute filter: column, operator, value."
+      },
+      "CountResult": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "DbHealthResult": {
+        "required": [
+          "status",
+          "connections"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "connections": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "ExtentResult": {
+        "required": [
+          "bbox",
+          "srid",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "bbox": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "FeatureQueryRequest": {
+        "type": "object",
+        "properties": {
+          "spatial": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Spatial predicate (optional).",
+                "$ref": "#/components/schemas/SpatialFilter"
+              }
+            ]
+          },
+          "bbox": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            },
+            "description": "minx,miny,maxx,maxy (optional)."
+          },
+          "bboxSrid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "filters": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AttributeFilter"
+            },
+            "description": "Attribute filters, e.g. {\"column\":\"population\",\"op\":\"gt\",\"value\":\"10000\"}."
+          },
+          "properties": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Subset of properties to return."
+          },
+          "orderBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descending": {
+            "type": "boolean"
+          },
+          "limit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "offset": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Output SRID. Default 4326.",
+            "format": "int32"
+          },
+          "precision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "simplify": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "withGeometry": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "boolean"
+          }
+        },
+        "description": "Body of POST /layers/{layer}/query."
+      },
+      "GeoJsonFeature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "geometry": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GeoJsonGeometry"
+              }
+            ]
+          },
+          "properties": {
+            "type": "object"
+          }
+        }
+      },
+      "GeoJsonFeatureCollection": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "numberReturned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "numberMatched": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Only present when count=true.",
+            "format": "int64"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeoJsonFeature"
+            }
+          }
+        }
+      },
+      "GeoJsonGeometry": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection"
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "GeometryOperationRequest": {
+        "type": "object",
+        "properties": {
+          "geometry": {
+            "description": "Input geometry (GeoJSON geometry or Feature).",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "geometry2": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Second geometry for distance, union, intersection, difference, intersects, contains, within.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "SRID of the input geometries. Default 4326.",
+            "format": "int32"
+          },
+          "targetSrid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "SRID of the output geometry (transform: required). Default = srid.",
+            "format": "int32"
+          },
+          "distance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Buffer distance (meters if geography=true).",
+            "format": "double"
+          },
+          "tolerance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Tolerance for simplify (in units of srid).",
+            "format": "double"
+          },
+          "geography": {
+            "type": "boolean",
+            "description": "Measure on the spheroid in meters (area, length, perimeter, distance, buffer)."
+          },
+          "precision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "GeometryOperationResult": {
+        "required": [
+          "operation",
+          "result",
+          "srid"
+        ],
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "HealthResult": {
+        "required": [
+          "status",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "InsertResult": {
+        "required": [
+          "inserted",
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "inserted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ids": {
+            "type": "array"
+          }
+        }
+      },
+      "JsonElement": {},
+      "LayerDetails": {
+        "required": [
+          "name",
+          "title",
+          "description",
+          "public",
+          "writable",
+          "tiles",
+          "srid",
+          "geometryType",
+          "idColumn",
+          "properties",
+          "defaultLimit",
+          "maxFeatures"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "writable": {
+            "type": "boolean"
+          },
+          "tiles": {
+            "type": "boolean"
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geometryType": {
+            "type": "string"
+          },
+          "idColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyInfo"
+            }
+          },
+          "defaultLimit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxFeatures": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "LayerSummary": {
+        "required": [
+          "name",
+          "title",
+          "description",
+          "public",
+          "writable",
+          "tiles"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "writable": {
+            "type": "boolean"
+          },
+          "tiles": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PropertyInfo": {
+        "required": [
+          "name",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "QueryParameterConfig": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Parameter name, referenced as @name in the SQL."
+          },
+          "type": {
+            "type": "string",
+            "description": "string, integer, bigint, number, boolean, date, timestamp, uuid, json, geojson"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A parameter of a named query."
+      },
+      "QuerySummary": {
+        "required": [
+          "name",
+          "title",
+          "description",
+          "format",
+          "public",
+          "parameters"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "format": {
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryParameterConfig"
+            }
+          }
+        }
+      },
+      "SpatialFilter": {
+        "type": "object",
+        "properties": {
+          "geometry": {
+            "description": "Input geometry as GeoJSON geometry (or Feature).",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "SRID of the input geometry. Default 4326.",
+            "format": "int32"
+          },
+          "relation": {
+            "type": "string",
+            "description": "intersects, within, contains, touches, crosses, overlaps, disjoint, equals, dwithin"
+          },
+          "distance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Distance for dwithin (meters if geography=true, otherwise layer units).",
+            "format": "double"
+          },
+          "geography": {
+            "type": "boolean",
+            "description": "Compute dwithin on the spheroid in meters."
+          }
+        },
+        "description": "Spatial predicate against an input geometry."
+      }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API key created in the admin backend.",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "Bearer": {
+        "type": "http",
+        "description": "OAuth 2.0 / OpenID Connect access token (if OIDC is enabled).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": []
+    },
+    {
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Layers"
+    },
+    {
+      "name": "Named queries"
+    },
+    {
+      "name": "Geometry operations"
+    },
+    {
+      "name": "Health"
+    }
+  ]
+}

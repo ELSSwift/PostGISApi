@@ -1,0 +1,1465 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "PostGIS API \u2013 Admin",
+    "description": "Configuration backend. Requires role 'admin'. All changes are stored in the JSON files of the config directory.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5080/"
+    }
+  ],
+  "paths": {
+    "/api/admin/connections": {
+      "get": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "List connections (passwords masked)",
+        "operationId": "AdminListConnections",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectionConfig"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/connections/{name}": {
+      "get": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "operationId": "AdminGetConnection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "Create or update a connection",
+        "operationId": "AdminPutConnection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "operationId": "AdminDeleteConnection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/connections/test": {
+      "post": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "Test connection settings before saving",
+        "operationId": "AdminTestConnectionConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/connections/{name}/test": {
+      "post": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "Test a saved connection",
+        "operationId": "AdminTestConnection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/connections/{name}/tables": {
+      "get": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "Discover tables/views with geometry columns",
+        "operationId": "AdminDiscoverTables",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GeometryTableInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/connections/{name}/tables/{schema}/{table}/columns": {
+      "get": {
+        "tags": [
+          "Admin: connections"
+        ],
+        "summary": "Columns of a table",
+        "operationId": "AdminListColumns",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schema",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "table",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ColumnView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/layers": {
+      "get": {
+        "tags": [
+          "Admin: layers"
+        ],
+        "operationId": "AdminListLayers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayerConfig"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/layers/{name}": {
+      "get": {
+        "tags": [
+          "Admin: layers"
+        ],
+        "operationId": "AdminGetLayer",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin: layers"
+        ],
+        "summary": "Create or update a layer (validated against the database)",
+        "operationId": "AdminPutLayer",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Save even if the table cannot be validated against the database.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin: layers"
+        ],
+        "operationId": "AdminDeleteLayer",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/queries": {
+      "get": {
+        "tags": [
+          "Admin: queries"
+        ],
+        "operationId": "AdminListQueries",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NamedQueryConfig"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/queries/{name}": {
+      "get": {
+        "tags": [
+          "Admin: queries"
+        ],
+        "operationId": "AdminGetQuery",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NamedQueryConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin: queries"
+        ],
+        "summary": "Create or update a named query",
+        "operationId": "AdminPutQuery",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamedQueryConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NamedQueryConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin: queries"
+        ],
+        "operationId": "AdminDeleteQuery",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/apikeys": {
+      "get": {
+        "tags": [
+          "Admin: API keys"
+        ],
+        "summary": "List API keys (without secrets)",
+        "operationId": "AdminListApiKeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin: API keys"
+        ],
+        "summary": "Create an API key. The key is returned only in this response.",
+        "operationId": "AdminCreateApiKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreated"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/apikeys/{id}": {
+      "put": {
+        "tags": [
+          "Admin: API keys"
+        ],
+        "summary": "Update roles, restrictions, enabled state or expiry of an API key",
+        "operationId": "AdminUpdateApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin: API keys"
+        ],
+        "operationId": "AdminDeleteApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/oidc": {
+      "get": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Get OIDC settings",
+        "operationId": "AdminGetOidc",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Update OIDC settings (applied immediately)",
+        "operationId": "AdminPutOidc",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/settings": {
+      "get": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Get general settings",
+        "operationId": "AdminGetSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Update general settings",
+        "operationId": "AdminPutSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneralSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/reload": {
+      "post": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Reload config files from disk and clear caches",
+        "operationId": "AdminReload",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReloadResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/whoami": {
+      "get": {
+        "tags": [
+          "Admin: system"
+        ],
+        "summary": "Current identity",
+        "operationId": "AdminWhoAmI",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousTypeOfstringAndstringAndIEnumerableOfstring"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnonymousTypeOfstringAndstringAndIEnumerableOfstring": {
+        "required": [
+          "name",
+          "auth",
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "auth": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApiKeyCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "read, write, admin"
+          },
+          "allowedLayers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedQueries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiKeyCreated": {
+        "required": [
+          "key",
+          "apiKey"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The API key. It is shown only once!"
+          },
+          "apiKey": {
+            "$ref": "#/components/schemas/ApiKeyView"
+          }
+        }
+      },
+      "ApiKeyUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedLayers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedQueries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "expiresUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "clearExpiry": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiKeyView": {
+        "required": [
+          "id",
+          "name",
+          "keyPrefix",
+          "roles",
+          "allowedLayers",
+          "allowedQueries",
+          "enabled",
+          "createdUtc",
+          "expiresUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "keyPrefix": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedLayers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedQueries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ColumnView": {
+        "required": [
+          "name",
+          "type",
+          "isPrimaryKey"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isPrimaryKey": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConnectionConfig": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the connection (letters, digits, '_' and '-')."
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "database": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Password in plain text. Prefer PasswordEnvVar for production."
+          },
+          "passwordEnvVar": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name of an environment variable that holds the password (takes precedence over Password)."
+          },
+          "sslMode": {
+            "type": "string",
+            "description": "Disable, Allow, Prefer, Require, VerifyCA or VerifyFull."
+          },
+          "maxPoolSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "commandTimeoutSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A PostgreSQL/PostGIS database connection (connections.json)."
+      },
+      "ConnectionTestResult": {
+        "required": [
+          "ok",
+          "postgresVersion",
+          "postgisVersion",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "postgresVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postgisVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "GeneralSettings": {
+        "type": "object",
+        "properties": {
+          "defaultConnection": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Connection used for /geometry operations. Empty = first connection."
+          },
+          "corsOrigins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed CORS origins, '*' for any."
+          },
+          "allowApiKeyInQuery": {
+            "type": "boolean",
+            "description": "Allow ?api_key=... in the URL (needed by some map clients for tiles)."
+          },
+          "enableSwaggerUi": {
+            "type": "boolean"
+          },
+          "detailedErrors": {
+            "type": "boolean",
+            "description": "Return database error messages to clients."
+          },
+          "tileCacheSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "GeometryTableInfo": {
+        "required": [
+          "schema",
+          "table",
+          "geometryColumn",
+          "srid",
+          "geometryType",
+          "primaryKey",
+          "isView"
+        ],
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "geometryColumn": {
+            "type": "string"
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geometryType": {
+            "type": "string"
+          },
+          "primaryKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isView": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LayerConfig": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "connection": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "geometryColumn": {
+            "type": "string"
+          },
+          "idColumn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Primary key column. Required for feature-by-id access and write operations."
+          },
+          "srid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "SRID of the geometry column. 0 = detect automatically.",
+            "format": "int32"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exposed attribute columns. Empty = all non-geometry columns."
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "If false, the layer can be modified via POST/PUT/DELETE (role 'write')."
+          },
+          "public": {
+            "type": "boolean",
+            "description": "If true, the layer can be read without authentication."
+          },
+          "defaultLimit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxFeatures": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enableTiles": {
+            "type": "boolean"
+          },
+          "maxTileFeatures": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A table or view with a geometry column that is exposed as layer (layers.json)."
+      },
+      "NamedQueryConfig": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "connection": {
+            "type": "string"
+          },
+          "sql": {
+            "type": "string",
+            "description": "A single SELECT statement. Parameters are written as @name."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryParameterConfig"
+            }
+          },
+          "format": {
+            "type": "string",
+            "description": "json (array of rows) or geojson (FeatureCollection)."
+          },
+          "geometryColumn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Geometry column of the result (format geojson)."
+          },
+          "idColumn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Id column of the result (format geojson, optional)."
+          },
+          "allowWrite": {
+            "type": "boolean",
+            "description": "If false the query runs in a READ ONLY transaction."
+          },
+          "public": {
+            "type": "boolean"
+          }
+        },
+        "description": "A predefined, parameterised SQL query (queries.json)."
+      },
+      "OidcConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "authority": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Issuer / authority URL, e.g. https://login.example.com/realms/gis"
+          },
+          "audience": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Expected audience. Empty = audience is not validated."
+          },
+          "requireHttpsMetadata": {
+            "type": "boolean"
+          },
+          "roleClaimType": {
+            "type": "string",
+            "description": "Claim that contains roles. Dotted paths into JSON claims are supported, e.g. realm_access.roles"
+          },
+          "useScopes": {
+            "type": "boolean",
+            "description": "Also evaluate the space separated 'scope' / 'scp' claim."
+          },
+          "readRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "writeRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "adminRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles every valid token gets, e.g. [\"read\"]."
+          }
+        }
+      },
+      "QueryParameterConfig": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Parameter name, referenced as @name in the SQL."
+          },
+          "type": {
+            "type": "string",
+            "description": "string, integer, bigint, number, boolean, date, timestamp, uuid, json, geojson"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A parameter of a named query."
+      },
+      "ReloadResult": {
+        "required": [
+          "connections",
+          "layers",
+          "queries"
+        ],
+        "type": "object",
+        "properties": {
+          "connections": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "layers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "queries": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API key created in the admin backend.",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "Bearer": {
+        "type": "http",
+        "description": "OAuth 2.0 / OpenID Connect access token (if OIDC is enabled).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": []
+    },
+    {
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin: connections"
+    },
+    {
+      "name": "Admin: layers"
+    },
+    {
+      "name": "Admin: queries"
+    },
+    {
+      "name": "Admin: API keys"
+    },
+    {
+      "name": "Admin: system"
+    }
+  ]
+}
