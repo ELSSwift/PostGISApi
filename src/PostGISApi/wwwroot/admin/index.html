@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostGIS API – Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>PostGIS API <span>Admin</span></h1>
+    <nav id="tabs" hidden>
+      <button data-tab="connections" class="active">Verbindungen</button>
+      <button data-tab="layers">Layer</button>
+      <button data-tab="queries">Abfragen</button>
+      <button data-tab="apikeys">API-Keys</button>
+      <button data-tab="oidc">OIDC</button>
+      <button data-tab="settings">Einstellungen</button>
+    </nav>
+    <div class="right">
+      <a href="/swagger" target="_blank">Swagger</a>
+      <button id="logout" class="link" hidden>Abmelden</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="login" class="card narrow">
+      <h2>Anmelden</h2>
+      <p>Admin-API-Key eingeben. Beim ersten Start wird ein Key generiert und im Log ausgegeben
+        (oder per Umgebungsvariable <code>PostGISApi__AdminApiKey</code> gesetzt).</p>
+      <form id="loginForm">
+        <label>API-Key <input type="password" id="loginKey" autocomplete="current-password" required></label>
+        <button type="submit" class="primary">Anmelden</button>
+      </form>
+      <p id="loginError" class="error"></p>
+    </section>
+    <section id="view" hidden></section>
+  </main>
+
+  <dialog id="dialog">
+    <form method="dialog" id="dialogForm">
+      <h2 id="dialogTitle"></h2>
+      <div id="dialogBody"></div>
+      <p id="dialogError" class="error"></p>
+      <div class="actions" id="dialogActions"></div>
+    </form>
+  </dialog>
+
+  <div id="toast" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

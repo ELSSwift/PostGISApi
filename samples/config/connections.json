@@ -1,0 +1,13 @@
+[
+  {
+    "name": "local",
+    "host": "localhost",
+    "port": 5432,
+    "database": "postgisapi_test",
+    "username": "postgres",
+    "passwordEnvVar": "DB_PASSWORD",
+    "sslMode": "Prefer",
+    "maxPoolSize": 20,
+    "commandTimeoutSeconds": 30
+  }
+]

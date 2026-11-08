@@ -1,0 +1,62 @@
+:root {
+  --bg: #f5f6f8; --fg: #1d2330; --muted: #677085; --card: #fff; --border: #dde1e8;
+  --primary: #2a6df4; --primary-fg: #fff; --danger: #c93a3a; --ok: #1f8a4c; --code: #eef1f6;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14171d; --fg: #e5e8ee; --muted: #9aa3b5; --card: #1c2028; --border: #2e3440;
+    --primary: #5b8ff9; --code: #262b35; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+header { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); }
+header h1 { font-size: 17px; margin: 0; }
+header h1 span { color: var(--muted); font-weight: 400; }
+header .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+nav button { border: 0; background: none; padding: 7px 12px; border-radius: 6px; color: var(--muted); cursor: pointer; font: inherit; }
+nav button.active { background: var(--code); color: var(--fg); font-weight: 600; }
+a { color: var(--primary); }
+main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+.narrow { max-width: 460px; margin: 40px auto; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.toolbar h2 { margin: 0; flex: 1; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+td.actions { white-space: nowrap; text-align: right; }
+.table-wrap { overflow-x: auto; }
+button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; }
+button:hover { border-color: var(--primary); }
+button.primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+button.danger { color: var(--danger); }
+button.link { border: 0; background: none; color: var(--primary); padding: 0; }
+td.actions button { padding: 3px 8px; margin-left: 4px; font-size: 13px; }
+label { display: block; margin-bottom: 10px; font-weight: 500; }
+label small { display: block; color: var(--muted); font-weight: 400; }
+input[type=text], input[type=password], input[type=number], input[type=datetime-local], select, textarea {
+  display: block; width: 100%; margin-top: 3px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--fg); font: inherit; }
+textarea { font-family: ui-monospace, Consolas, monospace; font-size: 13px; min-height: 90px; }
+label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; }
+.grid .wide { grid-column: 1 / -1; }
+dialog { border: 1px solid var(--border); border-radius: 12px; padding: 0; width: min(860px, calc(100vw - 32px)); background: var(--card); color: var(--fg); }
+dialog::backdrop { background: rgba(0,0,0,.4); }
+dialog form { padding: 18px 20px; max-height: calc(100vh - 60px); overflow-y: auto; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.error { color: var(--danger); white-space: pre-wrap; }
+.ok { color: var(--ok); }
+.muted { color: var(--muted); }
+.badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; background: var(--code); margin-right: 3px; }
+.badge.on { background: #dcf3e5; color: #17663a; }
+.badge.off { background: #f8dede; color: #8a2020; }
+code, pre { background: var(--code); border-radius: 4px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+code { padding: 1px 5px; }
+pre { padding: 10px; overflow: auto; max-height: 360px; }
+.secret { font-size: 15px; padding: 12px; word-break: break-all; user-select: all; }
+#map { height: 380px; border-radius: 8px; margin-bottom: 10px; }
+#toast { position: fixed; bottom: 20px; right: 20px; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+@media (max-width: 640px) { main { padding: 12px; } header { padding: 10px 12px; gap: 10px; } }

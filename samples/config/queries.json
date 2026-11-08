@@ -1,0 +1,33 @@
+[
+  {
+    "name": "staedte_kanton",
+    "connection": "local",
+    "sql": "SELECT name, einwohner, geom FROM staedte WHERE kanton = @kanton AND einwohner \u003E= @min ORDER BY einwohner DESC;",
+    "parameters": [
+      {
+        "name": "kanton",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "min",
+        "type": "integer",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "format": "geojson",
+    "geometryColumn": "geom",
+    "allowWrite": false,
+    "public": false
+  },
+  {
+    "name": "stats",
+    "connection": "local",
+    "sql": "SELECT kanton, count(*) AS anzahl, sum(einwohner) AS total FROM staedte GROUP BY kanton ORDER BY total DESC",
+    "parameters": [],
+    "format": "json",
+    "allowWrite": false,
+    "public": true
+  }
+]
